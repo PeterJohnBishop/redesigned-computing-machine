@@ -44,6 +44,7 @@ func handleWebSocket(c *gin.Context) {
 		}
 
 		switch msg.Event {
+
 		case "connect":
 			fmt.Printf("New Connection: %s\n", msg.Data)
 			conn.WriteMessage(websocket.TextMessage, []byte(`{"event":"system","data":"Welcome!"}`))
