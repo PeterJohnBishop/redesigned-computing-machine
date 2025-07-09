@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <h2>WebSocket Test</h2>
+  <input id="msg" placeholder="Message...">
+  <button onclick="sendMessage()">Send</button>
+  <div id="log"></div>
+
+  <script>
+    const socket = new WebSocket("ws://localhost:8081/api/v1/ws");
+
+    socket.onopen = function() {
+      socket.send(JSON.stringify({
+        event: "connect",
+        data: "Web connection established"
+        }));
+    };
+
+    socket.onmessage = function(event) {
+      const log = document.getElementById("log");
+      log.innerHTML += "<p>Server: " + event.data + "</p>";
+    };
+
+    function sendMessage() {
+      const msg = document.getElementById("msg").value;
+      socket.send(JSON.stringify({
+        event: "message",
+        data: msg
+        }));
+    }
+  </script>
+</body>
+</html>
