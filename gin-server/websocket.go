@@ -21,19 +21,25 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func handleWebSocket(c *gin.Context) {
+var connections = make(map[*websocket.Conn]bool)
 
+func handleWebSocket(c *gin.Context) {
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
-		fmt.Println("WebSocket Upgrade Error:", err)
+		fmt.Println("WebSocket upgrade error:", err)
 		return
 	}
 	defer conn.Close()
 
+	connections[conn] = true
+	defer delete(connections, conn)
+
+	fmt.Println("Client connected:", conn.RemoteAddr())
+
 	for {
 		_, msgBytes, err := conn.ReadMessage()
 		if err != nil {
-			fmt.Println("Read Error:", err)
+			fmt.Println("WebSocket read error:", err)
 			break
 		}
 
@@ -44,7 +50,6 @@ func handleWebSocket(c *gin.Context) {
 		}
 
 		switch msg.Event {
-
 		case "connect":
 			fmt.Printf("New Connection: %s\n", msg.Data)
 			conn.WriteMessage(websocket.TextMessage, []byte(`{"event":"system","data":"Welcome!"}`))
