@@ -11,6 +11,19 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+func Emit(payload string) bool {
+	for conn := range connections {
+		err := conn.WriteMessage(websocket.TextMessage, []byte(payload))
+		if err != nil {
+			fmt.Println("Write error:", err)
+			conn.Close()
+			delete(connections, conn)
+			return false
+		}
+	}
+	return true
+}
+
 func AddRoutes(r *gin.RouterGroup) {
 
 	r.GET("/status", func(c *gin.Context) {
@@ -119,24 +132,17 @@ func WebSocketRoutes(r *gin.Engine) {
 	})
 
 	r.POST("/broadcast", func(c *gin.Context) {
-		var body struct {
-			Message string `json:"message"`
-		}
-		if err := c.BindJSON(&body); err != nil {
+		var emit WSMessage
+		if err := c.BindJSON(&emit); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid payload"})
 			return
 		}
 
-		for conn := range connections {
-			err := conn.WriteMessage(websocket.TextMessage, []byte(body.Message))
-			if err != nil {
-				fmt.Println("Write error:", err)
-				conn.Close()
-				delete(connections, conn)
-			}
-		}
+		payload := fmt.Sprintf(`{"event":"%s","data":"%s"}`, emit.Event, emit.Data)
 
-		c.JSON(http.StatusOK, gin.H{"status": "message broadcasted"})
+		success := Emit(payload)
+
+		c.JSON(http.StatusOK, gin.H{"broadcast": success})
 	})
 
 }

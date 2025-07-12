@@ -37,7 +37,7 @@ func Init() {
 		port = "8080"
 	}
 
-	fmt.Println("Base path:", baseTorrentPath)
+	// fmt.Println("Base path:", baseTorrentPath)
 
 	err = os.MkdirAll(filepath.Join(baseTorrentPath, "files"), os.ModePerm)
 	if err != nil {
