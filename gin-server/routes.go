@@ -157,7 +157,7 @@ func AddLimitedConcurrencyRoutes(r *gin.RouterGroup) {
 			return
 		}
 
-		payload := fmt.Sprintf(`{"event": "downloaded", "data": "%s/%s"}`, file, index)
+		payload := fmt.Sprintf(`{"event": "download", "data": "%s/%s"}`, file, index)
 		if !Emit(payload) {
 			fmt.Println("Failed to emit chunk download event")
 		}

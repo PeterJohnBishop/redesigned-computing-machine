@@ -79,7 +79,7 @@ func handleWebSocket(c *gin.Context) {
 			conn.WriteMessage(websocket.TextMessage, []byte(`{"event":"upload","data":"`+msg.Data+`"}`))
 
 		case "downloaded":
-			fmt.Printf("File uploaded: %s\n", msg.Data)
+			fmt.Printf("File downloaded: %s\n", msg.Data)
 			conn.WriteMessage(websocket.TextMessage, []byte(`{"event":"upload","data":"`+msg.Data+`"}`))
 
 		default:
