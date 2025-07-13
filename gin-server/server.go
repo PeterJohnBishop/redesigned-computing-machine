@@ -18,6 +18,10 @@ func StartServer() {
 	WebSocketRoutes(r)
 	v1 := r.Group("/api/v1")
 	AddRoutes(v1)
+	concurrent := r.Group("/concurrent")
+	concurrent.Use(LimitConcurrentRequests(10)) // Limit concurrent requests to 10
+	AddLimitedConcurrencyRoutes(concurrent)
+
 	fmt.Printf("Gin server listening on port %s\n", port)
 	err := r.Run(fmt.Sprintf(":%s", port))
 	if err != nil {

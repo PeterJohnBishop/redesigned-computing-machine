@@ -118,22 +118,6 @@ func AddRoutes(r *gin.RouterGroup) {
 
 		c.JSON(http.StatusOK, allMetadata)
 	})
-
-	// download file chunks
-	r.GET("/chunk/:filename/:index", func(c *gin.Context) {
-		file := c.Param("filename")
-		index := c.Param("index")
-
-		chunkPath := filepath.Join(baseTorrentPath, "chunks", fmt.Sprintf("%s.chunk.%s", file, index))
-		fmt.Println("Looking for chunk at:", chunkPath)
-		if _, err := os.Stat(chunkPath); err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Chunk not found"})
-			return
-		}
-
-		c.File(chunkPath)
-	})
-
 }
 
 func WebSocketRoutes(r *gin.Engine) {
@@ -158,4 +142,21 @@ func WebSocketRoutes(r *gin.Engine) {
 		c.JSON(http.StatusOK, gin.H{"broadcast": success})
 	})
 
+}
+
+func AddLimitedConcurrencyRoutes(r *gin.RouterGroup) {
+
+	// download file chunks
+	r.GET("/chunk/:filename/:index", func(c *gin.Context) {
+		file := c.Param("filename")
+		index := c.Param("index")
+
+		chunkPath := filepath.Join(baseTorrentPath, fmt.Sprintf("%s.chunk.%s", file, index))
+		if _, err := os.Stat(chunkPath); err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Chunk not found"})
+			return
+		}
+
+		c.File(chunkPath)
+	})
 }
