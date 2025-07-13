@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: server-headless
+spec:
+  clusterIP: None  # Headless Service for peer discovery
+  selector:
+    app: torrent-server
+  ports:
+    - name: ws
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: torrent-server
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: torrent-server
+  template:
+    metadata:
+      labels:
+        app: torrent-server
+    spec:
+      containers:
+        - name: torrent-server
+          image: peterjbishop/torrent-server:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: PORT
+              value: "8080"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"

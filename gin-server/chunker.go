@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 )
 
-// var baseTorrentPath = "/data" // for container volume
-var baseTorrentPath = "data" // for local development
+var baseTorrentPath = "/data" // for container volume
+// var baseTorrentPath = "data" // for local development
 
 const ChunkSize = 1 * 1024 * 1024 // 1MB
 

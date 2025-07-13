@@ -12,24 +12,30 @@ import (
 )
 
 func Emit(payload string) bool {
-	for conn := range connections {
+	connectionsMu.Lock()
+	defer connectionsMu.Unlock()
+
+	allSuccess := true
+	for ip, conn := range connections {
 		err := conn.WriteMessage(websocket.TextMessage, []byte(payload))
 		if err != nil {
-			fmt.Println("Write error:", err)
+			fmt.Println("Write error to", ip, ":", err)
 			conn.Close()
-			delete(connections, conn)
-			return false
+			delete(connections, ip)
+			allSuccess = false
 		}
 	}
-	return true
+	return allSuccess
 }
 
 func AddRoutes(r *gin.RouterGroup) {
 
-	r.GET("/status", func(c *gin.Context) {
+	// check server online
+	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "Gin server is running!"})
 	})
 
+	// upload and split file
 	r.POST("/seed", func(c *gin.Context) {
 		file, err := c.FormFile("file")
 		if err != nil {
@@ -65,18 +71,22 @@ func AddRoutes(r *gin.RouterGroup) {
 			return
 		}
 
+		Emit(fmt.Sprintf(`{"event":"uploaded","data":"%s"}`, file.Filename))
+
 		c.JSON(http.StatusOK, gin.H{
 			"message":  "File uploaded and split successfully",
 			"metadata": metadata,
 		})
 	})
 
+	// get metadata file
 	r.GET("/metadata/:filename", func(c *gin.Context) {
 		file := c.Param("filename")
 		metaFilePath := filepath.Join(baseTorrentPath, "metadata", file+".meta.json")
 		c.File(metaFilePath)
 	})
 
+	// get all metadata files
 	r.GET("/metadata", func(c *gin.Context) {
 		metaDir := "data/metadata"
 		files, err := os.ReadDir(metaDir)
@@ -109,6 +119,7 @@ func AddRoutes(r *gin.RouterGroup) {
 		c.JSON(http.StatusOK, allMetadata)
 	})
 
+	// download file chunks
 	r.GET("/chunk/:filename/:index", func(c *gin.Context) {
 		file := c.Param("filename")
 		index := c.Param("index")
@@ -127,10 +138,12 @@ func AddRoutes(r *gin.RouterGroup) {
 
 func WebSocketRoutes(r *gin.Engine) {
 
+	// connect to WebSocket server
 	r.GET("/ws", func(c *gin.Context) {
 		handleWebSocket(c)
 	})
 
+	// broadcast message to all connected clients
 	r.POST("/broadcast", func(c *gin.Context) {
 		var emit WSMessage
 		if err := c.BindJSON(&emit); err != nil {
