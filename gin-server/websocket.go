@@ -77,7 +77,14 @@ func handleWebSocket(c *gin.Context) {
 		case "upload":
 			fmt.Printf("File uploaded: %s\n", msg.Data)
 			conn.WriteMessage(websocket.TextMessage, []byte(`{"event":"upload","data":"`+msg.Data+`"}`))
-
+			metadata, err := FetchMetadata(msg.Data)
+			if err != nil {
+				fmt.Printf("Metadata download failed: %v\n", err)
+			}
+			if metadata != nil {
+				fmt.Printf("Metadata for %s: %+v\n", msg.Data, metadata)
+			}
+			// Trigger chunk download
 		case "downloaded":
 			fmt.Printf("File downloaded: %s\n", msg.Data)
 			conn.WriteMessage(websocket.TextMessage, []byte(`{"event":"upload","data":"`+msg.Data+`"}`))

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -120,7 +121,14 @@ func WebSocketRoutes(r *gin.Engine) {
 		for ip := range connections {
 			ips = append(ips, ip)
 		}
-		c.JSON(http.StatusOK, gin.H{"server_ip": myPodIP, "connections": ips})
+
+		var filtered []string
+		for _, ip := range ips {
+			if !strings.Contains(ip, ":") {
+				filtered = append(filtered, ip)
+			}
+		}
+		c.JSON(http.StatusOK, gin.H{"server_ip": myPodIP, "connections": filtered})
 	})
 
 	// broadcast message to all connected clients
