@@ -89,8 +89,30 @@ func handleWebSocket(c *gin.Context) {
 	}
 }
 
+func Emit(payload string) bool {
+	connectionsMu.Lock()
+	defer connectionsMu.Unlock()
+
+	allSuccess := true
+	for ip, conn := range connections {
+		err := conn.WriteMessage(websocket.TextMessage, []byte(payload))
+		if err != nil {
+			fmt.Println("Write error to", ip, ":", err)
+			conn.Close()
+			delete(connections, ip)
+			allSuccess = false
+		}
+	}
+	return allSuccess
+}
+
 func PeerDiscovery() {
 	myPodIP := os.Getenv("MY_POD_IP")
+	fmt.Println("My Pod IP:", myPodIP)
+	if myPodIP == "" {
+		fmt.Println("MY_POD_IP environment variable is not set")
+		return
+	}
 	serviceDNS := "server-headless.default.svc.cluster.local"
 	port := 8080
 

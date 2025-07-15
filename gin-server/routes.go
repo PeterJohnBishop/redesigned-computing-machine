@@ -8,25 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
 )
-
-func Emit(payload string) bool {
-	connectionsMu.Lock()
-	defer connectionsMu.Unlock()
-
-	allSuccess := true
-	for ip, conn := range connections {
-		err := conn.WriteMessage(websocket.TextMessage, []byte(payload))
-		if err != nil {
-			fmt.Println("Write error to", ip, ":", err)
-			conn.Close()
-			delete(connections, ip)
-			allSuccess = false
-		}
-	}
-	return allSuccess
-}
 
 func AddRoutes(r *gin.RouterGroup) {
 
@@ -125,6 +107,20 @@ func WebSocketRoutes(r *gin.Engine) {
 	// connect to WebSocket server
 	r.GET("/ws", func(c *gin.Context) {
 		handleWebSocket(c)
+	})
+
+	// get WebSocket connections
+	r.GET("/connections", func(c *gin.Context) {
+
+		myPodIP := os.Getenv("MY_POD_IP")
+
+		connectionsMu.Lock()
+		defer connectionsMu.Unlock()
+		var ips []string
+		for ip := range connections {
+			ips = append(ips, ip)
+		}
+		c.JSON(http.StatusOK, gin.H{"server_ip": myPodIP, "connections": ips})
 	})
 
 	// broadcast message to all connected clients

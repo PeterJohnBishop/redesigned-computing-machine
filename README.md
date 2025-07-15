@@ -1,5 +1,7 @@
 # redesigned-computing-machine
 
+Once deployed, a cluster of 11 identical server pods is launched and each immediately beings connecting to the others via websocket connections.
+
 ## documentation links
 
 https://github.com/gin-gonic/gin
@@ -13,15 +15,11 @@ minikube start
 
 kubectl apply -f deployment.yaml
 
-kubectl get pods -l app=ws-server
-
-kubectl get svc server-headless
-
-kubectl expose deployment torrent-server --type=NodePort --port=8080
-
 minikube service torrent-server
 
 kubectl get pods -l app=torrent-server -o wide
+
+kubectl logs
 
 kubectl describe pod //name
 
